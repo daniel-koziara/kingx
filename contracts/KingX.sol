@@ -45,48 +45,29 @@ contract KingX is Context, ERC20 {
         _mint(initialLpAddress, 20e9 * 1e18);
     }
 
-    // function _update(address from, address to, uint256 value) internal virtual override {
-    //     uint256 feeAmount = 0;
-    //     uint256 transferValue = value;
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    ) public virtual override returns (bool) {
+        address spender = _msgSender();
+        _spendAllowance(from, spender, value);
 
-    //     if (from == routerAddress || to == routerAddress) {
-    //         feeAmount = (value * taxFeePercent) / 100;
-    //         transferValue = value - feeAmount;
+        uint256 feeAmount = 0;
+        uint256 transferValue = value;
 
-    //         genesis[GenesisTokens.KINGX] += feeAmount;
+        if (from == routerAddress || to == routerAddress) {
+            feeAmount = (value * taxFeePercent) / 100;
+            transferValue = value - feeAmount;
 
-    //         super.balances[address(this)] += feeAmount;
-    //     }
+            genesis[GenesisTokens.KINGX] += feeAmount;
 
-    //     if (from == address(0)) {
-    //         totalSupply += transferValue;
-    //     } else {
-    //         uint256 fromBalance = balances[from];
-    //         require(
-    //             fromBalance >= value,
-    //             "ERC20: transfer amount exceeds balance"
-    //         );
-    //         unchecked {
-    //             balances[from] = fromBalance - value;
-    //         }
-    //     }
+            _mint(address(this), feeAmount);
+        }
 
-    //     if (to == address(0)) {
-    //         unchecked {
-    //             totalSupply -= transferValue;
-    //         }
-    //     } else {
-    //         unchecked {
-    //             balances[to] += transferValue;
-    //         }
-    //     }
-
-    //     emit Transfer(from, to, transferValue);
-
-    //     if (feeAmount > 0) {
-    //         emit Transfer(from, address(this), feeAmount);
-    //     }
-    // }
+        _transfer(from, to, transferValue);
+        return true;
+    }
 
     function mint(uint256 titanXAmount) external {
         require(
