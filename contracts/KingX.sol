@@ -3,9 +3,21 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
 
-import "./Constants.sol";
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address) {
+        return msg.sender;
+    }
+
+    function _msgData() internal view virtual returns (bytes calldata) {
+        return msg.data;
+    }
+
+    function _contextSuffixLength() internal view virtual returns (uint256) {
+        return 0;
+    }
+}
+
 
 contract KingX is Context, ERC20 {
     using SafeERC20 for IERC20;
@@ -21,8 +33,17 @@ contract KingX is Context, ERC20 {
     uint256 public constant MINTING_PERIOD = 17 days;
     uint256 public constant INITIAL_RATE = 1e18; // 1:1 rate
     uint256 public constant FINAL_RATE = 1e17; // 1:0.1 rate
-    // mapping(address => uint256) public balances;
-    // uint256 public totalSupply;
+    address constant TITANX_ADDRESS = 0xF19308F923582A6f7c465e5CE7a9Dc1BEC6665B1;
+
+    // owners
+    address constant HELLWHALE_OWNER = 0x8add03eafe6E89Cc28726f8Bb91096C2dE139fFb;
+    address constant DANIEL_KOZIARA_OWNER = 0x7e603e457d8C0D61351111614ad977315Dfc77aa;
+    address constant KRONOS_OWNER = 0x9FEAcbaf3C4277bC9438759058E9E334f866992a;
+
+    // enums
+    enum GenesisTokens {
+        KINGX, TITANX
+    }
 
     event Mint(address indexed user, uint256 amount, uint256 rate);
     event GenesisRewardDistributed(
@@ -45,29 +66,32 @@ contract KingX is Context, ERC20 {
         _mint(initialLpAddress, 20e9 * 1e18);
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) public virtual override returns (bool) {
-        address spender = _msgSender();
-        _spendAllowance(from, spender, value);
 
-        uint256 feeAmount = 0;
-        uint256 transferValue = value;
+    function transfer(address recipient, uint256 amount) public override returns (bool) {
+        uint256 taxFee = calculateTaxFee(amount);
+        uint256 amountAfterTax = amount - taxFee;
 
-        if (from == routerAddress || to == routerAddress) {
-            feeAmount = (value * taxFeePercent) / 100;
-            transferValue = value - feeAmount;
+        super.transfer(taxFeeAddress, taxFee);
+        super.transfer(recipient, amountAfterTax);
 
-            genesis[GenesisTokens.KINGX] += feeAmount;
-
-            _mint(address(this), feeAmount);
-        }
-
-        _transfer(from, to, transferValue);
         return true;
     }
+
+    function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
+        uint256 taxFee = calculateTaxFee(amount);
+        uint256 amountAfterTax = amount - taxFee;
+
+        super.transferFrom(sender, taxFeeAddress, taxFee);
+        super.transferFrom(sender, recipient, amountAfterTax);
+
+        return true;
+    }
+
+    function calculateTaxFee(uint256 amount) public view returns (uint256) {
+        return (amount * taxFeePercent) / 100;
+    }
+
+
 
     function mint(uint256 titanXAmount) external {
         require(
