@@ -16,7 +16,7 @@ contract KingX is Context, ERC20 {
     address public taxFeeAddress;
     mapping(GenesisTokens => uint256) public genesis;
     address public constant routerAddress =
-        0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+        0xE592427A0AEce92De3Edee1F18E0157C05861564; // router v3 uniswap
     uint256 public constant MINTING_PERIOD = 17 days;
     uint256 public constant INITIAL_RATE = 1e18; // 1:1 rate
     uint256 public constant FINAL_RATE = 1e17; // 1:0.1 rate
