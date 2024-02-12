@@ -63,7 +63,7 @@ contract KingX is Context, ERC20 {
             super.transfer(taxFeeAddress, taxFee);
             super.transfer(to, valueAfterTax);
         } else {
-            super.transferFrom(from, to, value);
+            super.transfer(to, value);
         }
 
         return true;
@@ -136,8 +136,8 @@ contract KingX is Context, ERC20 {
         uint256 totalAmountTitanX = genesis[GenesisTokens.TITANX];
 
         if(totalAmountKingX > 0) {
-            uint256 amountKingxForDaniel = totalAmount / 2; // 50% for Daniel
-            uint256 amountKingxForOthers = totalAmount / 4; // 25% for others
+            uint256 amountKingxForDaniel = totalAmountKingX / 2; // 50% for Daniel
+            uint256 amountKingxForOthers = totalAmountKingX / 4; // 25% for others
             
             transfer(DANIEL_KOZIARA_OWNER, amountKingxForDaniel);
             transfer(HELLWHALE_OWNER, amountKingxForOthers);
@@ -147,8 +147,8 @@ contract KingX is Context, ERC20 {
         }
 
         if(totalAmountTitanX > 0) {
-            uint256 amountTitanxForDaniel = totalAmount / 2; // 50% for Daniel
-            uint256 amountTitanxForOthers = totalAmount / 4; // 25% for others
+            uint256 amountTitanxForDaniel = totalAmountTitanX / 2; // 50% for Daniel
+            uint256 amountTitanxForOthers = totalAmountTitanX / 4; // 25% for others
 
             transfer(DANIEL_KOZIARA_OWNER, amountTitanxForDaniel);
             transfer(HELLWHALE_OWNER, amountTitanxForOthers);
