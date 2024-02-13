@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -134,10 +134,10 @@ contract KingX is Context, ERC20 {
         uint256 totalAmountKingX = genesis[GenesisTokens.KINGX];
         uint256 totalAmountTitanX = genesis[GenesisTokens.TITANX];
 
-        if(totalAmountKingX > 0) {
+        if (totalAmountKingX > 0) {
             uint256 amountKingxForDaniel = totalAmountKingX / 2; // 50% for Daniel
             uint256 amountKingxForOthers = totalAmountKingX / 4; // 25% for others
-            
+
             transfer(DANIEL_KOZIARA_OWNER, amountKingxForDaniel);
             transfer(HELLWHALE_OWNER, amountKingxForOthers);
             transfer(KRONOS_OWNER, amountKingxForOthers);
@@ -145,7 +145,7 @@ contract KingX is Context, ERC20 {
             genesis[GenesisTokens.KINGX] = 0;
         }
 
-        if(totalAmountTitanX > 0) {
+        if (totalAmountTitanX > 0) {
             uint256 amountTitanxForDaniel = totalAmountTitanX / 2; // 50% for Daniel
             uint256 amountTitanxForOthers = totalAmountTitanX / 4; // 25% for others
 
@@ -155,6 +155,5 @@ contract KingX is Context, ERC20 {
 
             genesis[GenesisTokens.TITANX] = 0;
         }
-
     }
 }
