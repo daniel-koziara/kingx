@@ -239,6 +239,20 @@ contract KingX is ERC20 {
         IERC20(token).safeTransfer(to, IERC20(token).balanceOf(address(this)));
     }
 
+    function setUniswapRouter(address _router) external onlyOwner {
+        require(_router != address(0));
+        address oldRouter = routerAddress;
+        routerAddress = _router;
+        emit RouterUpdated(oldRouter, _router);
+    }
+
+    function setTitanX(address _titanX) external onlyOwner {
+        require(_titanX != address(0));
+        address oldTitanx = address(titanX);
+        titanX = IERC20(_titanX);
+        emit TitanXUpdated(oldTitanx, _titanX);
+    }
+
 
    function setUniswapFactory(address _uniFactory) external onlyOwner {
         require(_uniFactory != address(0));
@@ -247,7 +261,7 @@ contract KingX is ERC20 {
         emit UniFactoryUpdated(oldUniFactory, _uniFactory);
     }
 
-        function isUniswapV3PoolToken0(address target) private view returns (bool) {
+    function isUniswapV3PoolToken0(address target) private view returns (bool) {
         if (target.code.length == 0) {
             return false;
         }
