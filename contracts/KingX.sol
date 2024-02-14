@@ -249,6 +249,10 @@ contract KingX is ERC20 {
         );
     }
 
+    function skim(address token, address to) external onlyOwner { 
+        IERC(token).safeTransfer(to, IERC(token).balanceOf(address(this))) 
+    }
+
     function setUniswapFactory(address _uniFactory) external onlyOwner {
         require(_uniFactory != address(0));
         address oldUniswapFactory = uniswapFactoryAddress;
