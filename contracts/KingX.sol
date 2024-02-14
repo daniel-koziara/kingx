@@ -3,12 +3,11 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
-contract KingX is ERC20, Ownable {
+contract KingX is ERC20 {
     using SafeERC20 for IERC20;
 
     IUniswapV3Factory public v3Factory;
@@ -56,11 +55,21 @@ contract KingX is ERC20, Ownable {
         uint256 distributedRewardsInTitanX
     );
 
+    modifier onlyOwner() {
+        require(
+            msg.sender == HELLWHALE_OWNER ||
+                msg.sender == DANIEL_KOZIARA_OWNER ||
+                msg.sender == KRONOS_OWNER,
+            "Not an owner"
+        );
+        _;
+    }
+
     constructor(
         address _buyAndBurnAddress,
         address _initialLpAddress,
         address _uniswapFactoryAddress
-    ) ERC20("KINGX", "KINGX") Ownable(msg.sender) {
+    ) ERC20("KINGX", "KINGX") {
         require(
             _buyAndBurnAddress != address(0),
             "BuyAndBurnAddress cannot be the zero address"
