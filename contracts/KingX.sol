@@ -94,21 +94,6 @@ contract KingX is ERC20 {
         _mint(initialLpAddress, 20e9 * 1e18);
     }
 
-    function setUniswapRouter(address _router) external onlyOwner {
-        require(_router != address(0));
-        address oldRouter = routerAddress;
-        routerAddress = _router;
-        emit RouterUpdated(oldRouter, _router);
-    }
-
-    function setTitanX(address _titanX) external onlyOwner {
-        require(_titanX != address(0));
-        address oldTitanx = address(titanX);
-        titanX = IERC20(_titanX);
-        emit TitanXUpdated(oldTitanx, _titanX);
-    }
-
-
     function transfer(address to, uint256 value) public override returns (bool) {
         uint256 valueAfterTax = value;
 
@@ -252,7 +237,6 @@ contract KingX is ERC20 {
         titanX = IERC20(_titanX);
         emit TitanXUpdated(oldTitanx, _titanX);
     }
-
 
    function setUniswapFactory(address _uniFactory) external onlyOwner {
         require(_uniFactory != address(0));
