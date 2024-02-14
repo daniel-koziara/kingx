@@ -9,6 +9,7 @@ const WETH_ADDRESS = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 const HELLWHALE_OWNER = "0x8add03eafe6E89Cc28726f8Bb91096C2dE139fFb";
 const DANIEL_KOZIARA_OWNER = "0x7e603e457d8C0D61351111614ad977315Dfc77aa";
 const KRONOS_OWNER = "0x9FEAcbaf3C4277bC9438759058E9E334f866992a";
+const routerAddress = '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD';
 
 const GenesisTokens = {
     KINGX: 0,
@@ -29,7 +30,7 @@ describe("Mint", function () {
         swapHelper = await SwapHelperFactory.deploy(SWAP_ROUTER_ADDRESS, WETH_ADDRESS);
 
         KingX = await ethers.getContractFactory("KingX");
-        kingXToken = await KingX.deploy(owner.address, addr1);
+        kingXToken = await KingX.deploy(owner.address, addr1, routerAddress);
 
         titanXToken = await ethers.getContractAt("ITitanX", TITANX_ADDRESS);
 
@@ -99,8 +100,8 @@ describe("Mint", function () {
         await titanXToken.connect(owner).approve(await kingXToken.getAddress(), swapAmount);
         await kingXToken.connect(owner).mint(swapAmount);
 
-        const balanceKingX = await titanXToken.balanceOf(await kingXToken.getAddress());
-        expect(balanceKingX).to.be.gt(0);
+        const balanceTitanX = await titanXToken.balanceOf(await kingXToken.getAddress());
+        expect(balanceTitanX).to.be.gt(0);
 
         const totalGenesisRewards = await kingXToken.genesis(GenesisTokens.TITANX);
 
@@ -108,8 +109,7 @@ describe("Mint", function () {
         const initialBalanceHellwhale = await titanXToken.balanceOf(HELLWHALE_OWNER);
         const initialBalanceKronos = await titanXToken.balanceOf(KRONOS_OWNER);
 
-
-        await kingXToken.connect(owner).distributeGenesisRewards(GenesisTokens.TITANX);
+        await kingXToken.connect(owner).distributeGenesisRewards();
 
 
         const finalBalanceDaniel = await titanXToken.balanceOf(DANIEL_KOZIARA_OWNER);
