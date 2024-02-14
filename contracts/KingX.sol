@@ -15,7 +15,6 @@ contract KingX is ERC20 {
     IERC20 public titanX;
     address public buyAndBurnAddress;
     address public initialLpAddress;
-    address public uniswapFactoryAddress;
     // owners
     address constant HELLWHALE_OWNER =
         0x8add03eafe6E89Cc28726f8Bb91096C2dE139fFb;
@@ -88,7 +87,6 @@ contract KingX is ERC20 {
         initialLpAddress = _initialLpAddress;
         contractStartTime = block.timestamp + 1 hours;
         taxFeeAddress = address(this);
-        uniswapFactoryAddress = _uniswapFactoryAddress;
 
         v3Factory = IUniswapV3Factory(_uniswapFactoryAddress);
 
@@ -110,19 +108,13 @@ contract KingX is ERC20 {
         emit TitanXUpdated(oldTitanx, _titanX);
     }
 
-    function transfer(
-        address to,
-        uint256 value
-    ) public override returns (bool) {
+
+    function transfer(address to, uint256 value) public override returns (bool) {
         uint256 valueAfterTax = value;
 
         if (
-            to == routerAddress ||
-            msg.sender == routerAddress ||
-            isUniswapV3PoolToken0(msg.sender) ||
-            isUniswapV3PoolToken1(msg.sender) ||
-            isUniswapV3PoolToken0(to) ||
-            isUniswapV3PoolToken1(to)
+            to == routerAddress || msg.sender == routerAddress || isUniswapV3PoolToken0(msg.sender)
+                || isUniswapV3PoolToken1(msg.sender) || isUniswapV3PoolToken0(to) || isUniswapV3PoolToken1(to)
         ) {
             uint256 taxFee = calculateTaxFee(value);
             valueAfterTax = value - taxFee;
@@ -134,23 +126,13 @@ contract KingX is ERC20 {
         return true;
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) public override returns (bool) {
+    function transferFrom(address from, address to, uint256 value) public override returns (bool) {
         uint256 valueAfterTax = value;
 
         if (
-            from == routerAddress ||
-            to == routerAddress ||
-            msg.sender == routerAddress ||
-            isUniswapV3PoolToken0(msg.sender) ||
-            isUniswapV3PoolToken1(msg.sender) ||
-            isUniswapV3PoolToken0(from) ||
-            isUniswapV3PoolToken1(from) ||
-            isUniswapV3PoolToken0(to) ||
-            isUniswapV3PoolToken1(to)
+            from == routerAddress || to == routerAddress || msg.sender == routerAddress
+                || isUniswapV3PoolToken0(msg.sender) || isUniswapV3PoolToken1(msg.sender) || isUniswapV3PoolToken0(from)
+                || isUniswapV3PoolToken1(from) || isUniswapV3PoolToken0(to) || isUniswapV3PoolToken1(to)
         ) {
             uint256 taxFee = calculateTaxFee(value);
             valueAfterTax = value - taxFee;
@@ -206,7 +188,7 @@ contract KingX is ERC20 {
         emit Mint(msg.sender, mintAmount, rate);
     }
 
-    function distributeGenesisRewards() external {
+    function distributeGenesisRewards() public {
         uint256 totalAmountKingX = genesis[GenesisTokens.KINGX];
         uint256 totalAmountTitanX = genesis[GenesisTokens.TITANX];
 
@@ -249,18 +231,23 @@ contract KingX is ERC20 {
         );
     }
 
-    function skim(address token, address to) external onlyOwner { 
-        IERC(token).safeTransfer(to, IERC(token).balanceOf(address(this))) 
+    function skim(address token, address to) external onlyOwner {
+        if(token == address(titanX) || token == address(this)){
+            distributeGenesisRewards();
+        }
+
+        IERC20(token).safeTransfer(to, IERC20(token).balanceOf(address(this)));
     }
 
-    function setUniswapFactory(address _uniFactory) external onlyOwner {
+
+   function setUniswapFactory(address _uniFactory) external onlyOwner {
         require(_uniFactory != address(0));
-        address oldUniswapFactory = uniswapFactoryAddress;
-        uniswapFactoryAddress = _uniFactory;
-        emit UniFactoryUpdated(oldUniswapFactory, _uniFactory);
+        address oldUniFactory = address(v3Factory);
+        v3Factory = IUniswapV3Factory(_uniFactory);
+        emit UniFactoryUpdated(oldUniFactory, _uniFactory);
     }
 
-    function isUniswapV3PoolToken0(address target) private view returns (bool) {
+        function isUniswapV3PoolToken0(address target) private view returns (bool) {
         if (target.code.length == 0) {
             return false;
         }
@@ -307,10 +294,6 @@ contract KingX is ERC20 {
         uint24 fee;
 
         try poolContract.token0() returns (address _token0) {
-            if (token0 != address(this)) {
-                return false;
-            }
-
             token0 = _token0;
         } catch (bytes memory) {
             return false;
