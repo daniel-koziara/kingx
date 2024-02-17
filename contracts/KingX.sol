@@ -34,6 +34,8 @@ contract KingX is ERC20 {
     address public taxFeeAddress;
     address public routerAddress = 0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD;
 
+    bool public isTaxEnabled = false;
+
     mapping(GenesisTokens => uint256) public genesis;
 
     // enums
@@ -94,40 +96,65 @@ contract KingX is ERC20 {
         _mint(initialLpAddress, 20e9 * 1e18);
     }
 
-    function transfer(address to, uint256 value) public override returns (bool) {
+    function transfer(
+        address to,
+        uint256 value
+    ) public override returns (bool) {
         uint256 valueAfterTax = value;
+        if (isTaxEnabled) {
+            if (
+                to == routerAddress ||
+                msg.sender == routerAddress ||
+                isUniswapV3PoolToken0(msg.sender) ||
+                isUniswapV3PoolToken1(msg.sender) ||
+                isUniswapV3PoolToken0(to) ||
+                isUniswapV3PoolToken1(to)
+            ) {
+                uint256 taxFee = calculateTaxFee(value);
+                valueAfterTax = value - taxFee;
+                genesis[GenesisTokens.KINGX] += taxFee;
+                super.transfer(taxFeeAddress, taxFee);
+            }
 
-        if (
-            to == routerAddress || msg.sender == routerAddress || isUniswapV3PoolToken0(msg.sender)
-                || isUniswapV3PoolToken1(msg.sender) || isUniswapV3PoolToken0(to) || isUniswapV3PoolToken1(to)
-        ) {
-            uint256 taxFee = calculateTaxFee(value);
-            valueAfterTax = value - taxFee;
-            genesis[GenesisTokens.KINGX] += taxFee;
-            super.transfer(taxFeeAddress, taxFee);
+            super.transfer(to, valueAfterTax);
+            return true;
+        } else {
+            super.transfer(to, valueAfterTax);
+            return true;
         }
-
-        super.transfer(to, valueAfterTax);
-        return true;
     }
 
-    function transferFrom(address from, address to, uint256 value) public override returns (bool) {
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    ) public override returns (bool) {
         uint256 valueAfterTax = value;
+        if (isTaxEnabled) {
+            if (
+                from == routerAddress ||
+                to == routerAddress ||
+                msg.sender == routerAddress ||
+                isUniswapV3PoolToken0(msg.sender) ||
+                isUniswapV3PoolToken1(msg.sender) ||
+                isUniswapV3PoolToken0(from) ||
+                isUniswapV3PoolToken1(from) ||
+                isUniswapV3PoolToken0(to) ||
+                isUniswapV3PoolToken1(to)
+            ) {
+                uint256 taxFee = calculateTaxFee(value);
+                valueAfterTax = value - taxFee;
 
-        if (
-            from == routerAddress || to == routerAddress || msg.sender == routerAddress
-                || isUniswapV3PoolToken0(msg.sender) || isUniswapV3PoolToken1(msg.sender) || isUniswapV3PoolToken0(from)
-                || isUniswapV3PoolToken1(from) || isUniswapV3PoolToken0(to) || isUniswapV3PoolToken1(to)
-        ) {
-            uint256 taxFee = calculateTaxFee(value);
-            valueAfterTax = value - taxFee;
+                genesis[GenesisTokens.KINGX] += taxFee;
+                super.transferFrom(from, taxFeeAddress, taxFee);
+            }
+            super.transferFrom(from, to, valueAfterTax);
 
-            genesis[GenesisTokens.KINGX] += taxFee;
-            super.transferFrom(from, taxFeeAddress, taxFee);
+            return true;
+        } else {
+            super.transferFrom(from, to, valueAfterTax);
+            return true;
         }
-        super.transferFrom(from, to, valueAfterTax);
-
-        return true;
     }
 
     function calculateTaxFee(uint256 amount) private pure returns (uint256) {
@@ -217,7 +244,7 @@ contract KingX is ERC20 {
     }
 
     function skim(address token, address to) external onlyOwner {
-        if(token == address(titanX) || token == address(this)){
+        if (token == address(titanX) || token == address(this)) {
             distributeGenesisRewards();
         }
 
@@ -238,7 +265,15 @@ contract KingX is ERC20 {
         emit TitanXUpdated(oldTitanx, _titanX);
     }
 
-   function setUniswapFactory(address _uniFactory) external onlyOwner {
+    function setIsTaxEnabled(bool _isTaxEnabled) external onlyOwner {
+        isTaxEnabled = IERC20(_isTaxEnabled);
+    }
+
+    function getIsTaxEnabled() public view returns (bool) {
+        return isTaxEnabled;
+    }
+
+    function setUniswapFactory(address _uniFactory) external onlyOwner {
         require(_uniFactory != address(0));
         address oldUniFactory = address(v3Factory);
         v3Factory = IUniswapV3Factory(_uniFactory);
