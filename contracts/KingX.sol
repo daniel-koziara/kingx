@@ -94,73 +94,6 @@ contract KingX is ERC20 {
         _mint(initialLpAddress, 20e9 * 1e18);
     }
 
-    function transfer(
-        address to,
-        uint256 value
-    ) public override returns (bool) {
-        uint256 valueAfterTax = value;
-        uint256 isTaxEnabled = contractStartTime - 1 hours + 10 minutes;
-        if (block.timestamp > isTaxEnabled) {
-            if (
-                to == routerAddress ||
-                msg.sender == routerAddress ||
-                isUniswapV3PoolToken0(msg.sender) ||
-                isUniswapV3PoolToken1(msg.sender) ||
-                isUniswapV3PoolToken0(to) ||
-                isUniswapV3PoolToken1(to)
-            ) {
-                uint256 taxFee = calculateTaxFee(value);
-                valueAfterTax = value - taxFee;
-                genesis[GenesisTokens.KINGX] += taxFee;
-                super.transfer(taxFeeAddress, taxFee);
-            }
-
-            super.transfer(to, valueAfterTax);
-            return true;
-        } else {
-            super.transfer(to, valueAfterTax);
-            return true;
-        }
-    }
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) public override returns (bool) {
-        uint256 valueAfterTax = value;
-        uint256 isTaxEnabled = contractStartTime - 1 hours + 10 minutes;
-        if (block.timestamp > isTaxEnabled) {
-            if (
-                from == routerAddress ||
-                to == routerAddress ||
-                msg.sender == routerAddress ||
-                isUniswapV3PoolToken0(msg.sender) ||
-                isUniswapV3PoolToken1(msg.sender) ||
-                isUniswapV3PoolToken0(from) ||
-                isUniswapV3PoolToken1(from) ||
-                isUniswapV3PoolToken0(to) ||
-                isUniswapV3PoolToken1(to)
-            ) {
-                uint256 taxFee = calculateTaxFee(value);
-                valueAfterTax = value - taxFee;
-
-                genesis[GenesisTokens.KINGX] += taxFee;
-                super.transferFrom(from, taxFeeAddress, taxFee);
-            }
-            super.transferFrom(from, to, valueAfterTax);
-
-            return true;
-        } else {
-            super.transferFrom(from, to, valueAfterTax);
-            return true;
-        }
-    }
-
-    function calculateTaxFee(uint256 amount) private pure returns (uint256) {
-        return (amount * taxFeePercentBps) / 10000;
-    }
-
     function mint(uint256 titanXAmount) external {
         require(
             block.timestamp >= contractStartTime,
@@ -258,88 +191,10 @@ contract KingX is ERC20 {
         emit RouterUpdated(oldRouter, _router);
     }
 
-    function setTitanX(address _titanX) external onlyOwner {
-        require(_titanX != address(0));
-        address oldTitanx = address(titanX);
-        titanX = IERC20(_titanX);
-        emit TitanXUpdated(oldTitanx, _titanX);
-    }
-
     function setUniswapFactory(address _uniFactory) external onlyOwner {
         require(_uniFactory != address(0));
         address oldUniFactory = address(v3Factory);
         v3Factory = IUniswapV3Factory(_uniFactory);
         emit UniFactoryUpdated(oldUniFactory, _uniFactory);
-    }
-
-    function isUniswapV3PoolToken0(address target) private view returns (bool) {
-        if (target.code.length == 0) {
-            return false;
-        }
-
-        IUniswapV3Pool poolContract = IUniswapV3Pool(target);
-        address token0;
-        address token1;
-        uint24 fee;
-
-        try poolContract.token0() returns (address _token0) {
-            if (_token0 != address(this)) {
-                return false;
-            }
-
-            token0 = _token0;
-        } catch (bytes memory) {
-            return false;
-        }
-
-        try poolContract.token1() returns (address _token1) {
-            token1 = _token1;
-        } catch (bytes memory) {
-            return false;
-        }
-
-        try poolContract.fee() returns (uint24 _fee) {
-            fee = _fee;
-        } catch (bytes memory) {
-            return false;
-        }
-
-        return target == v3Factory.getPool(token0, token1, fee);
-    }
-
-    function isUniswapV3PoolToken1(address target) private view returns (bool) {
-        if (target.code.length == 0) {
-            return false;
-        }
-
-        IUniswapV3Pool poolContract = IUniswapV3Pool(target);
-
-        address token0;
-        address token1;
-        uint24 fee;
-
-        try poolContract.token0() returns (address _token0) {
-            token0 = _token0;
-        } catch (bytes memory) {
-            return false;
-        }
-
-        try poolContract.token1() returns (address _token1) {
-            if (_token1 != address(this)) {
-                return false;
-            }
-
-            token1 = _token1;
-        } catch (bytes memory) {
-            return false;
-        }
-
-        try poolContract.fee() returns (uint24 _fee) {
-            fee = _fee;
-        } catch (bytes memory) {
-            return false;
-        }
-
-        return target == v3Factory.getPool(token0, token1, fee);
     }
 }
