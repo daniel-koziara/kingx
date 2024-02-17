@@ -266,7 +266,7 @@ contract KingX is ERC20 {
     }
 
     function setIsTaxEnabled(bool _isTaxEnabled) external onlyOwner {
-        isTaxEnabled = IERC20(_isTaxEnabled);
+        isTaxEnabled = _isTaxEnabled;
     }
 
     function getIsTaxEnabled() public view returns (bool) {
