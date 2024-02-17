@@ -34,8 +34,6 @@ contract KingX is ERC20 {
     address public taxFeeAddress;
     address public routerAddress = 0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD;
 
-    bool public isTaxEnabled = false;
-
     mapping(GenesisTokens => uint256) public genesis;
 
     // enums
@@ -101,7 +99,8 @@ contract KingX is ERC20 {
         uint256 value
     ) public override returns (bool) {
         uint256 valueAfterTax = value;
-        if (isTaxEnabled) {
+        uint256 isTaxEnabled = contractStartTime - 1 hours + 10 minutes;
+        if (block.timestamp > isTaxEnabled) {
             if (
                 to == routerAddress ||
                 msg.sender == routerAddress ||
@@ -130,7 +129,8 @@ contract KingX is ERC20 {
         uint256 value
     ) public override returns (bool) {
         uint256 valueAfterTax = value;
-        if (isTaxEnabled) {
+        uint256 isTaxEnabled = contractStartTime - 1 hours + 10 minutes;
+        if (block.timestamp > isTaxEnabled) {
             if (
                 from == routerAddress ||
                 to == routerAddress ||
@@ -263,14 +263,6 @@ contract KingX is ERC20 {
         address oldTitanx = address(titanX);
         titanX = IERC20(_titanX);
         emit TitanXUpdated(oldTitanx, _titanX);
-    }
-
-    function setIsTaxEnabled(bool _isTaxEnabled) external onlyOwner {
-        isTaxEnabled = _isTaxEnabled;
-    }
-
-    function getIsTaxEnabled() public view returns (bool) {
-        return isTaxEnabled;
     }
 
     function setUniswapFactory(address _uniFactory) external onlyOwner {
