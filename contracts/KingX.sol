@@ -11,7 +11,7 @@ contract KingX is ERC20, Ownable {
     IERC20 public titanX;
     address public buyAndBurnAddress;
     address public initialLpAddress;
-    address public genesis;
+    address public genesisAddress;
 
     uint256 public constant MINTING_PERIOD = 17 days;
     uint256 public constant INITIAL_RATE = 1e18; // 1:1 rate
@@ -48,6 +48,7 @@ contract KingX is ERC20, Ownable {
         buyAndBurnAddress = _buyAndBurnAddress;
         initialLpAddress = _initialLpAddress;
         contractStartTime = block.timestamp + 1 hours;
+        genesisAddress = _genesisAddress;
 
         // Mint and send 20B tokens for INITIAL_LP_ACCOUNT
         _mint(initialLpAddress, 20e9 * 1e18);
@@ -65,8 +66,7 @@ contract KingX is ERC20, Ownable {
         );
 
         uint256 genesisAmount = (titanXAmount * 3) / 100;
-
-        titanX.safeTransferFrom(msg.sender, address(this), genesisAmount);
+        titanX.safeTransferFrom(msg.sender, genesisAddress, genesisAmount);
 
         uint256 transferAmount = titanXAmount - genesisAmount;
 
